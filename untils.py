@@ -1,6 +1,7 @@
 from abc import ABC
 import logging
 import types
+from typing import Optional, Awaitable
 
 import tornado.web
 
@@ -11,8 +12,8 @@ logger.setLevel(logging.DEBUG)
 
 
 class RouteMixIn:
-    __host__ = r'.*'
-    __route__ = None
+    __host__ = r'.*'  # default virtual host.
+    __route__ = None  # default route.
 
     @property
     def route(self):
@@ -21,6 +22,12 @@ class RouteMixIn:
 
 class Handler(RouteMixIn, tornado.web.RequestHandler):
     pass
+    # async def prepare(self) -> Optional[Awaitable[None]]:
+    #     """
+    #     预处理
+    #     :return: awaitable
+    #     """
+    #     return super().prepare()
 
 
 def add_routers(app, moudel_name=None):
