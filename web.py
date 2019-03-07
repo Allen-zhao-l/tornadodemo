@@ -14,5 +14,5 @@ def init(app):
 if __name__ == '__main__':
     app = Application(template_path='templates', autoreload=True)
     http_server = tornado.httpserver.HTTPServer(init(app))
-    http_server.listen(8080)
+    http_server.listen(8000)
     tornado.ioloop.IOLoop.current().start()
