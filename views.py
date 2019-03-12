@@ -2,6 +2,8 @@ from untils import Handler, SocketHandler
 from tornado.httpclient import AsyncHTTPClient
 import asyncio
 from tornado.web import authenticated
+import json
+from untils import escapdict
 
 
 class BaseHandler(Handler):
@@ -23,18 +25,33 @@ class BaseIndex(BaseHandler):
         self.redirect('/')
 
 
-class Logout(BaseHandler):
-    __route__ = r'/logout'
+class EditConf(BaseHandler):
+    __route__ = r'/conf/([\w\.]+)'
 
     async def get(self, *args, **kwargs):
-        if (self.get_current_user()):
-            self.clear_cookie("uid")
-            self.redirect("/")
+        file = './conf.json'
+        with open(file) as f:
+            data = json.load(f)
+        self.render('config.html', name=f.name, func=escapdict, contain=data)
 
+    async def post(self, *args, **kwargs):
+        data = self.request.arguments
+        data.pop('_xsrf')
+        name = data.pop('name')[0].decode('utf8')
+        data = {k: v[0].decode('utf8') for k, v in data.items()}
+        pass
 
-class index(BaseHandler):
-    __route__ = '/'
+    class Logout(BaseHandler):
+        __route__ = r'/logout'
 
-    @authenticated
-    async def get(self, *args, **kwargs):
-        self.render('index.html', name=self.get_secure_cookie('uid'))
+        async def get(self, *args, **kwargs):
+            if (self.get_current_user()):
+                self.clear_cookie("uid")
+                self.redirect("/")
+
+    class index(BaseHandler):
+        __route__ = '/'
+
+        @authenticated
+        async def get(self, *args, **kwargs):
+            self.render('index.html', name=self.get_secure_cookie('uid'))

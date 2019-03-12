@@ -1,0 +1,12 @@
+{% extends "index.html" %}
+
+{% block contain %}
+<form action="#" method="post" id="{{ None }}">
+    {% raw xsrf_form_html() %}
+    {% for x,k,v in func(contain) %}
+    <p>{{ k }}:<input name="{{ x }}.{{ k }}" value="{{ v }}"></p>
+    {% end %}
+    <input type="hidden" name="name" value="{{ name }}">
+    <input type="submit" value="Send">
+</form>
+{% end %}

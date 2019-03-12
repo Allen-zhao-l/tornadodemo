@@ -2,7 +2,6 @@ from abc import ABC
 import logging
 import types
 from typing import Optional, Awaitable
-
 import tornado.web
 import tornado.websocket
 
@@ -27,12 +26,20 @@ class SocketHandler(RouteMixIn, tornado.websocket.WebSocketHandler):
 
 class Handler(RouteMixIn, tornado.web.RequestHandler):
     pass
-    # async def prepare(self) -> Optional[Awaitable[None]]:
-    #     """
-    #     预处理
-    #     :return: awaitable
-    #     """
-    #     return super().prepare()
+
+
+def escapdict(d, pri=1):
+    values = []
+    assert isinstance(d, dict)
+    for k, v in d.items():
+        if isinstance(v, dict):
+            values.extend(escapdict(v, pri + 1))
+        elif isinstance(v, (list, tuple)):
+            for x in v:
+                values.extend(escapdict(x, pri + 1))
+        else:
+            values.append((pri, k, v))
+    return values
 
 
 def add_routers(app, moudel_name=None):
