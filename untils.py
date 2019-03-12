@@ -4,9 +4,10 @@ import types
 from typing import Optional, Awaitable
 
 import tornado.web
+import tornado.websocket
 
 logging.basicConfig(level=logging.DEBUG, format=
-'|'.join(['%(levelname)s', '%(filename)s', '%(lineno)d', '%(threadName)s', '%(asctime)s', '%(message)s']))
+'|'.join(['%(levelname)7s', '%(filename)10s', '%(lineno)d', '%(threadName)s', '%(asctime)s', '%(message)s']))
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -18,6 +19,10 @@ class RouteMixIn:
     @property
     def route(self):
         return self.__route__
+
+
+class SocketHandler(RouteMixIn, tornado.websocket.WebSocketHandler):
+    pass
 
 
 class Handler(RouteMixIn, tornado.web.RequestHandler):

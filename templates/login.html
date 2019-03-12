@@ -1,0 +1,36 @@
+{% extends "index.html" %}
+{% block contain %}
+    <div class="contact-agileits-w3layouts" id="contact">
+
+        <div class="wthree-form">
+            <div class="container">
+                <div class="col-md-6 contact-form agile_inner_grids">
+                    <h5 class="title-w3">Login</h5>
+                    <form action="#" method="post">
+                        {% raw xsrf_form_html() %}
+                        <div class="fields-grid">
+                            <div class="styled-input">
+                                <input type="text" name="Full Name" placeholder="Name" required="">
+                            </div>
+                            <div class="styled-input">
+                                <input type="email" name="Email" placeholder="Email" required="">
+                            </div>
+                            <div class="styled-input">
+                                <input type="text" name="Subject" placeholder="Subject" required="">
+                            </div>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="styled-input textarea-grid">
+                            <textarea name="Message" placeholder="Message" required></textarea>
+                        </div>
+                        <input type="submit" value="Send">
+                    </form>
+                </div>
+                <!---<div class="col-md-6 map-w3-agileits">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2477.523147399147!2d-0.18136368416846532!3d51.61362537965271!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x487619e5c86f6147%3A0x7f009116a7f24760!2sNether+Street+Apartment!5e0!3m2!1sen!2sin!4v1501221607097"></iframe>
+                </div>--->
+                <div class="clearfix"></div>
+            </div>
+        </div>
+    </div>
+{% end %}
