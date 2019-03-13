@@ -29,17 +29,15 @@ class Handler(RouteMixIn, tornado.web.RequestHandler):
 
 
 def escapdict(d, pri=1):
-    values = []
     assert isinstance(d, dict)
     for k, v in d.items():
         if isinstance(v, dict):
-            values.extend(escapdict(v, pri + 1))
+            yield from escapdict(v, pri + 1)
         elif isinstance(v, (list, tuple)):
             for x in v:
-                values.extend(escapdict(x, pri + 1))
+                yield from escapdict(x, pri + 1)
         else:
-            values.append((pri, k, v))
-    return values
+            yield (pri, k, v)
 
 
 def add_routers(app, moudel_name=None):

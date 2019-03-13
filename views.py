@@ -27,9 +27,12 @@ class BaseIndex(BaseHandler):
 
 class EditConf(BaseHandler):
     __route__ = r'/conf/([\w\.]+)'
+    conf = {'shadowsocks': '/etc/shadowsocks.json'}
 
     async def get(self, *args, **kwargs):
-        file = './conf.json'
+        file = self.conf.get(args[0],None)
+        if not file:
+            self.render('index.html',name="No find file.")
         with open(file) as f:
             data = json.load(f)
         self.render('config.html', name=f.name, func=escapdict, contain=data)
@@ -41,17 +44,19 @@ class EditConf(BaseHandler):
         data = {k: v[0].decode('utf8') for k, v in data.items()}
         pass
 
-    class Logout(BaseHandler):
-        __route__ = r'/logout'
 
-        async def get(self, *args, **kwargs):
-            if (self.get_current_user()):
-                self.clear_cookie("uid")
-                self.redirect("/")
+class Logout(BaseHandler):
+    __route__ = r'/logout'
 
-    class index(BaseHandler):
-        __route__ = '/'
+    async def get(self, *args, **kwargs):
+        if (self.get_current_user()):
+            self.clear_cookie("uid")
+            self.redirect("/")
 
-        @authenticated
-        async def get(self, *args, **kwargs):
-            self.render('index.html', name=self.get_secure_cookie('uid'))
+
+class index(BaseHandler):
+    __route__ = '/'
+
+    @authenticated
+    async def get(self, *args, **kwargs):
+        self.render('index.html', name=self.get_secure_cookie('uid'))
