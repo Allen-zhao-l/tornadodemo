@@ -1,7 +1,14 @@
 {% extends "base.html" %}
 {% block contain %}
 <li>Welcome {{ uid }}</li>
+<ul id="cahrt-info">
+</ul>
 <script type="text/javascript">
+    function add(info) {
+        var elem_li = document.createElement('li'); // 生成一个 li元素
+        elem_li.innerHTML = info; // 设置元素的内容
+        document.getElementById('cahrt-info').appendChild(elem_li); // 添加到UL中去
+    }
     var uinfo={% raw uinfo %};
     var ws=new WebSocket("ws://127.0.0.1:8000/ws");
     console.log(ws);
@@ -9,6 +16,7 @@
         ws.send("Hello, world");
     };
     ws.onmessage = function (evt) {
+        add(evt.data);
         console.log(evt.data);
     };
 
