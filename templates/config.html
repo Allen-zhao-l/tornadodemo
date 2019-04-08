@@ -1,6 +1,9 @@
 {% extends "index.html" %}
 
 {% block contain %}
+{% if name %}
+<p> {{name}}</p>
+{% else %}
 <form action="#" method="post" id="{{ None }}">
     {% raw xsrf_form_html() %}
     {% for x,k,v in func(contain) %}
@@ -9,4 +12,5 @@
     <input type="hidden" name="name" value="{{ name }}">
     <input type="submit" value="Send">
 </form>
-{% end %}
+{% end if %}
+{% end block %}

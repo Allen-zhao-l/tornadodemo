@@ -1,19 +1,24 @@
 import asyncio
-from tornado.web import Application, RequestHandler
-from tornado.options import define, options
-from untils import add_routers, logger
+import os
+
+import pymongo
+import redis
 import tornado.httpserver
 import tornado.ioloop
 from pymongo.pool import Pool
-import pymongo
-import os
+from tornado.options import define, options
+from tornado.web import Application, RequestHandler
+
+from untils import add_routers, logger, setLogLevel
 
 define("port", default=8000, help="run on the given port", type=int)
-
+define("log_level",default="INFO",help="App log level",type=str)
 
 def init(app):
-    add_routers(app, 'views')
-
+    setLogLevel(options.log_level)
+    add_routers(app, 'views.views')
+    add_routers(app, 'views.blog.blog')
+    add_routers(app, 'views.chat.chat')
     return app
 
 
@@ -22,8 +27,7 @@ class Applicationutils(Application):
     def __init__(self, handlers=None, default_host=None, transforms=None, **settings):
         super().__init__(handlers, default_host, transforms, **settings)
         self.db = pymongo.MongoClient(port=27017)['tornado']
-
-
+        self.redis=redis.Redis()
 if __name__ == '__main__':
     tornado.options.parse_command_line()
     setting = {
