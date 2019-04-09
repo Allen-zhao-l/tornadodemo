@@ -4,32 +4,36 @@
 <ul id="cahrt-info">
 </ul>
 <script type="text/javascript">
-    function add(info) {
+    function add(info, mes) {
         var elem_li = document.createElement('li'); // 生成一个 li元素
-        elem_li.innerHTML = info; // 设置元素的内容
+        elem_li.innerHTML = info + ":" + mes; // 设置元素的内容
         document.getElementById('cahrt-info').appendChild(elem_li); // 添加到UL中去
     }
-    var uinfo={% raw uinfo %};
-    var ws=new WebSocket("ws://127.0.0.1:8000/ws");
-    console.log(ws);
-    ws.onopen = function() {
-        ws.send("Hello, world");
-    };
+    var uinfo = {% raw uinfo %};
+    var ws = new WebSocket("ws://127.0.0.1:8000/ws");
+    //console.log(ws);  
+    ws.onopen = function () {
+        alert("Join  chat room.")
+    }
     ws.onmessage = function (evt) {
-        add(evt.data);
-        console.log(evt.data);
-    };
+        var w = JSON.parse(evt.data)
+        add(w.user, w.msg);
+        //console.log(evt.data);
+    }
 
-    function send(){
+    function send() {
         ws.send(document.getElementById("input_msg").value);
     }
-    function close(){
-        console.log('close chat room.')
-        ws.close()
-        window.close()
+    function mclose() {
+        console.log('close chat room.');
+        ws.close();
+        //<!-- window.opener = null; -->
+        window.open('', '_self');
+        window.close();
+
     }
 </script>
-<input type="button" onclick="close()" value="关闭聊天室">
+<input type="button" onclick="mclose();" value="关闭聊天室">
 <input type="text" id="input_msg" name="mes">
 <input type="button" onclick="send();" value="发送">
 {% end block %}

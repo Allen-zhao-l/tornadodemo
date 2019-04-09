@@ -1,7 +1,7 @@
 from untils import SocketHandler, Handler
 from hashlib import sha256
 import json
-users = dict()
+
 
 
 class ChatManage(dict):
@@ -14,7 +14,7 @@ class ChatManage(dict):
             if i == user:
                 continue
             else:
-                wt=json.dumps(dict(user=users[user], msg=message))
+                wt=json.dumps(dict(user=ChatRoom.users[user], msg=message))
                 v.write_message(wt)
 
 
@@ -44,13 +44,13 @@ class Login(Handler):
         self.application.db['chat'].insert(
             dict(id=uid, fn=fn, mail=mail, sub=sub, mes=Message))
         self.set_secure_cookie('user-id', uid)
-        users[uid] = fn
+        ChatRoom.users[uid] = fn
         self.redirect('/chatroom')
 
 
 class ChatRoom(Handler):
     __route__ = r'/chatroom'
-
+    users = dict()
     async def get(self, *args, **kwargs):
         user = self.get_secure_cookie('user-id', None)
         if user:
@@ -58,8 +58,8 @@ class ChatRoom(Handler):
                 {'id': user.decode('utf8')})
             if uinfo:
                 uinfo.pop('_id')
-            if user not in users:
-                users[user]=uinfo['fn']
+            if user not in self.users:
+                self.users[user]=uinfo['fn']
             self.render('chat.html', uid=uinfo['fn'], uinfo=uinfo)
         else:
             self.redirect('/chat/login')
@@ -67,7 +67,7 @@ class ChatRoom(Handler):
 
 class Chat(SocketHandler):
     __route__ = r'/ws'
-    cm = ChatManage()
+    cm = ChatManage() #类成员
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
