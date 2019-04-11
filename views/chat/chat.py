@@ -2,28 +2,34 @@ from untils import SocketHandler, Handler
 from hashlib import sha256
 import json
 
-__host__=r'chat'
+
+if not __debug__:
+    __host__ = r'chat\.wufatiannv\.xyz'
+
 
 class ChatManage(dict):
     # def __setitem__(self, key, value):
     #     if 'uid' not in key:
     #         raise RuntimeError('User Not have uid.')
     #     return super().__setitem__(key, value)
-    def broadcast(self, message, user):
+    async def broadcast(self, message, user):
         for i, v in self.items():
             if i == user:
                 continue
             else:
-                wt=json.dumps(dict(user=ChatRoom.users[user], msg=message))
-                v.write_message(wt)
+                wt = json.dumps(dict(user=ChatRoom.users[user], msg=message))
+                await v.write_message(wt)
 
 
 class Login(Handler):
-    __route__ = r'/login'
+    if __debug__:
+        __route__ = r'/chat/login'
+    else:
+        __route__ = r'/login'
 
     async def get(self, *args, **kwargs):
         user = self.get_secure_cookie('user-id', None)
-        
+
         if user:
             self.redirect('/chatroom')
         self.render('login.html')
@@ -45,12 +51,22 @@ class Login(Handler):
             dict(id=uid, fn=fn, mail=mail, sub=sub, mes=Message))
         self.set_secure_cookie('user-id', uid)
         ChatRoom.users[uid] = fn
-        self.redirect('/chatroom')
+        if __debug__:
+            self.redirect('/chat/chatroom')
+        else:
+            self.redirect('/chatroom')
 
 
 class ChatRoom(Handler):
-    __route__ = r'/chatroom'
+    if __debug__:
+        __route__ = r'/chat/chatroom'
+        ws_addr = "ws://127.0.0.1:8000/ws"
+    else:
+        __route__ = r'/chatroom'
+        ws_addr = "ws://chat.wufatiannv.xyz/ws"
+
     users = dict()
+
     async def get(self, *args, **kwargs):
         user = self.get_secure_cookie('user-id', None)
         if user:
@@ -59,15 +75,20 @@ class ChatRoom(Handler):
             if uinfo:
                 uinfo.pop('_id')
             if user not in self.users:
-                self.users[user]=uinfo['fn']
-            self.render('chat.html', uid=uinfo['fn'], uinfo=uinfo)
+                self.users[user] = uinfo['fn']
+
+            self.render(
+                'chat.html', uid=uinfo['fn'], uinfo=uinfo, wsockaddr=self.ws_addr)
         else:
-            self.redirect('/chat/login')
+            if __debug__:
+                self.redirect('/chat/login')
+            else:
+                self.redirect('/login')
 
 
 class Chat(SocketHandler):
     __route__ = r'/ws'
-    cm = ChatManage() #类成员
+    cm = ChatManage()  # 类成员
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -79,10 +100,12 @@ class Chat(SocketHandler):
         self.write_message('welcome')
         uid = self.get_secure_cookie('user-id')
         self.cm[uid] = self
+        self.cm.broadcast("Welecon {} Join Chat room.".format(self.application.db['chat'].find_one(
+            {'id': uid.decode('utf8')}))['fn'])
 
     async def on_message(self, message):
         uid = self.get_secure_cookie('user-id')
-        self.cm.broadcast(message, uid)
+        await self.cm.broadcast(message, uid)
 
     def on_close(self):
         uid = self.get_secure_cookie('user-id')

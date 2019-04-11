@@ -10,7 +10,7 @@
         document.getElementById('cahrt-info').appendChild(elem_li); // 添加到UL中去
     }
     var uinfo = {% raw uinfo %};
-    var ws = new WebSocket("ws://chat.wufatiannv:8000/ws");
+    var ws = new WebSocket("{% raw wsockaddr %}");
     //console.log(ws);  
     ws.onopen = function () {
         alert("Join  chat room.")

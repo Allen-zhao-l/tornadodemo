@@ -13,6 +13,8 @@ from untils import add_routers, logger, setLogLevel
 
 define("port", default=8000, help="run on the given port", type=int)
 define("log_level",default="INFO",help="App log level",type=str)
+define("debug",default=False,type=bool)
+
 
 def init(app):
     setLogLevel(options.log_level)
@@ -35,9 +37,11 @@ if __name__ == '__main__':
         "autoreload": True,
         "login_url": '/login',
         "static_path": os.path.join(os.path.dirname(__file__), "static"),
+        "debug":options.debug
     }
     app = Applicationutils(**setting)
     http_server = tornado.httpserver.HTTPServer(init(app))
-    http_server.listen(options.port,"0.0.0.0")
-    logger.info("Start server http://127.0.0.1:{}".format(options.port))
+    lsaddr="127.0.0.1" if __debug__ else "172.16.0.1"
+    http_server.listen(options.port)
+    logger.info("Start server http://{}:{}".format(lsaddr,options.port))
     tornado.ioloop.IOLoop.current().start()
