@@ -12,7 +12,7 @@ logger.setLevel(logging.INFO)
 
 
 class RouteMixIn:
-    __host__ = r'.*'  # default virtual host.
+    __host__ = None  # default virtual host.
     __route__ = None  # default route.
 
     @property
@@ -47,6 +47,9 @@ def add_routers(app, moudel_name=None):
         name = moudel_name[n + 1:]
         mod = getattr(__import__(
             moudel_name[:n], globals(), locals(), [name]), name)
+
+
+    defaultHost=getattr(mod,"__host__",r".*")
     for attr in dir(mod):
         if attr.startswith('_'):
             continue
@@ -54,6 +57,8 @@ def add_routers(app, moudel_name=None):
         if not isinstance(attr, type) or not issubclass(attr, (Handler,SocketHandler)):
             continue
         host = getattr(attr, '__host__')
+        if host==None:
+            host=defaultHost
         route = getattr(attr, '__route__')
         if host and route:
             app.add_handlers(host_pattern=host, host_handlers=[(route, attr)])

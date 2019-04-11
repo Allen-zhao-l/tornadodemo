@@ -2,7 +2,7 @@ from untils import SocketHandler, Handler
 from hashlib import sha256
 import json
 
-
+__host__=r'chat'
 
 class ChatManage(dict):
     # def __setitem__(self, key, value):
@@ -19,7 +19,7 @@ class ChatManage(dict):
 
 
 class Login(Handler):
-    __route__ = r'/chat/login'
+    __route__ = r'/login'
 
     async def get(self, *args, **kwargs):
         user = self.get_secure_cookie('user-id', None)

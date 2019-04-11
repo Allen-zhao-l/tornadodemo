@@ -23,7 +23,6 @@ def init(app):
 
 
 class Applicationutils(Application):
-
     def __init__(self, handlers=None, default_host=None, transforms=None, **settings):
         super().__init__(handlers, default_host, transforms, **settings)
         self.db = pymongo.MongoClient(port=27017)['tornado']
@@ -39,6 +38,6 @@ if __name__ == '__main__':
     }
     app = Applicationutils(**setting)
     http_server = tornado.httpserver.HTTPServer(init(app))
-    http_server.listen(options.port)
+    http_server.listen(options.port,"0.0.0.0")
     logger.info("Start server http://127.0.0.1:{}".format(options.port))
     tornado.ioloop.IOLoop.current().start()
