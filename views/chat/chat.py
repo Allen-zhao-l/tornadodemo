@@ -61,10 +61,10 @@ class Login(Handler):
 class ChatRoom(Handler):
     if __debug__:
         __route__ = r'/chat/chatroom'
-        ws_addr = "ws://127.0.0.1:8000/ws"
+        ws_addr = "ws://127.0.0.1:8000/ws/chat"
     else:
         __route__ = r'/chatroom'
-        ws_addr = "ws://chat.wufatiannv.xyz/ws"
+        ws_addr = "ws://chat.wufatiannv.xyz/ws/chat"
 
     users = dict(Sys="Sys")
 
@@ -88,7 +88,7 @@ class ChatRoom(Handler):
 
 
 class Chat(SocketHandler):
-    __route__ = r'/ws'
+    __route__ = r'/ws/chat'
     cm = ChatManage()  # 类成员
 
     def __init__(self, *args, **kwargs):
