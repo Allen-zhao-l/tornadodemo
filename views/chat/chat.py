@@ -18,11 +18,12 @@ class ChatManage(dict):
     #     return super().__setitem__(key, value)
     async def broadcast(self, message, user=None):
         if user:
+            fn=self[user][0]['fn']
             for i, v in self.items():
                 if i == user:
                     continue
                 else:
-                    wt = json.dumps(dict(user=v[0]['fn'], msg=message))
+                    wt = json.dumps(dict(user=fn, msg=message))
                     await v[1].write_message(wt)
         else:
             for i, v in self.items():
@@ -128,4 +129,4 @@ class Chat(SocketHandler):
 
     def on_close(self):
         uid = self.get_secure_cookie('user-id')
-        cm[uid].pop(-1)
+        cm.pop(uid)
