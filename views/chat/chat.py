@@ -32,7 +32,8 @@ class Login(Handler):
 
         if user:
             self.redirect('/chatroom')
-        self.render('login.html')
+        else:
+            self.render('login.html')
 
     async def post(self, *args, **kwargs):
         def mhash(*args):
@@ -65,7 +66,7 @@ class ChatRoom(Handler):
         __route__ = r'/chatroom'
         ws_addr = "ws://chat.wufatiannv.xyz/ws"
 
-    users = dict()
+    users = dict(Sys="Sys")
 
     async def get(self, *args, **kwargs):
         user = self.get_secure_cookie('user-id', None)
@@ -74,16 +75,16 @@ class ChatRoom(Handler):
                 {'id': user.decode('utf8')})
             if uinfo:
                 uinfo.pop('_id')
-            if user not in self.users:
-                self.users[user] = uinfo['fn']
-
-            self.render(
-                'chat.html', uid=uinfo['fn'], uinfo=uinfo, wsockaddr=self.ws_addr)
+                if user not in self.users:
+                    self.users[user] = uinfo['fn']
+                self.render(
+                    'chat.html', uid=uinfo['fn'], uinfo=uinfo, wsockaddr=self.ws_addr)
+                return
+        self.clear_all_cookies()
+        if __debug__:
+            self.redirect('/chat/login')
         else:
-            if __debug__:
-                self.redirect('/chat/login')
-            else:
-                self.redirect('/login')
+            self.redirect('/login')
 
 
 class Chat(SocketHandler):
@@ -100,8 +101,8 @@ class Chat(SocketHandler):
         self.write_message('welcome')
         uid = self.get_secure_cookie('user-id')
         self.cm[uid] = self
-        self.cm.broadcast("Welecon {} Join Chat room.".format(self.application.db['chat'].find_one(
-            {'id': uid.decode('utf8')}))['fn'])
+        await self.cm.broadcast("Welecon {} Join Chat room.".format(self.application.db['chat'].find_one(
+            {'id': uid.decode('utf8')})['fn']),"Sys")
 
     async def on_message(self, message):
         uid = self.get_secure_cookie('user-id')
