@@ -7,6 +7,10 @@
     function add(info, mes) {
         var elem_li = document.createElement('li'); // 生成一个 li元素
         elem_li.innerHTML = info + ":" + mes; // 设置元素的内容
+        var x=$("ul#cahrt-info li")
+        if (x.length==20){
+            x.remove(0)
+        }
         document.getElementById('cahrt-info').appendChild(elem_li); // 添加到UL中去
     }
     var uinfo = {% raw uinfo %};
@@ -19,6 +23,9 @@
         var w = JSON.parse(evt.data)
         add(w.user, w.msg);
         //console.log(evt.data);
+    }
+    ws.onclose=function(){
+        alert("网络连接出错，请刷新重试")
     }
 
     function send() {

@@ -1,7 +1,11 @@
-from untils import SocketHandler, Handler
-from hashlib import sha256
 import json
+import time
+from hashlib import sha256
+from weakref import WeakValueDictionary
 
+import tornado.auth
+
+from untils import Handler, SocketHandler
 
 if not __debug__:
     __host__ = r'chat\.wufatiannv\.xyz'
@@ -12,13 +16,21 @@ class ChatManage(dict):
     #     if 'uid' not in key:
     #         raise RuntimeError('User Not have uid.')
     #     return super().__setitem__(key, value)
-    async def broadcast(self, message, user):
-        for i, v in self.items():
-            if i == user:
-                continue
-            else:
-                wt = json.dumps(dict(user=ChatRoom.users[user], msg=message))
-                await v.write_message(wt)
+    async def broadcast(self, message, user=None):
+        if user:
+            for i, v in self.items():
+                if i == user:
+                    continue
+                else:
+                    wt = json.dumps(dict(user=v[0]['fn'], msg=message))
+                    await v[1].write_message(wt)
+        else:
+            for i, v in self.items():
+                wt = json.dumps(dict(user="Sys", msg=message))
+                await v[1].write_message(wt)
+
+
+cm = ChatManage()  # 类成员
 
 
 class Login(Handler):
@@ -48,10 +60,11 @@ class Login(Handler):
         Message = self.get_body_argument('Message')
 
         uid = mhash(fn, mail)
-        self.application.db['chat'].insert(
-            dict(id=uid, fn=fn, mail=mail, sub=sub, mes=Message))
+        udict = dict(id=uid, fn=fn, mail=mail, sub=sub, mes=Message)
+        self.application.db['chat'].insert(udict)
         self.set_secure_cookie('user-id', uid)
-        ChatRoom.users[uid] = fn
+
+        cm[uid] = [udict, ]
         if __debug__:
             self.redirect('/chat/chatroom')
         else:
@@ -66,20 +79,21 @@ class ChatRoom(Handler):
         __route__ = r'/chatroom'
         ws_addr = "ws://chat.wufatiannv.xyz/ws/chat"
 
-    users = dict(Sys="Sys")
-
     async def get(self, *args, **kwargs):
         user = self.get_secure_cookie('user-id', None)
         if user:
-            uinfo = self.application.db['chat'].find_one(
-                {'id': user.decode('utf8')})
-            if uinfo:
-                uinfo.pop('_id')
-                if user not in self.users:
-                    self.users[user] = uinfo['fn']
-                self.render(
+            if user not in cm:
+                uinfo = self.application.db['chat'].find_one(
+                    {'id': user.decode('utf8')})
+                if uinfo:
+                    uinfo.pop('_id')
+                    cm[user] = [uinfo, ]
+                    return self.render(
+                        'chat.html', uid=uinfo['fn'], uinfo=uinfo, wsockaddr=self.ws_addr)
+            else:
+                uinfo = cm[user][0]
+                return self.render(
                     'chat.html', uid=uinfo['fn'], uinfo=uinfo, wsockaddr=self.ws_addr)
-                return
         self.clear_all_cookies()
         if __debug__:
             self.redirect('/chat/login')
@@ -89,7 +103,6 @@ class ChatRoom(Handler):
 
 class Chat(SocketHandler):
     __route__ = r'/ws/chat'
-    cm = ChatManage()  # 类成员
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -98,16 +111,21 @@ class Chat(SocketHandler):
         return True
 
     async def open(self):
-        self.write_message('welcome')
+        db = self.application.db['chche']
         uid = self.get_secure_cookie('user-id')
-        self.cm[uid] = self
-        await self.cm.broadcast("Welecon {} Join Chat room.".format(self.application.db['chat'].find_one(
-            {'id': uid.decode('utf8')})['fn']),"Sys")
+        cm[uid].append(self)
+        await cm.broadcast("Welecon {} Join Chat room.".format(cm[uid][0]['fn']))
+        cache = list(db.find().sort('time', -1).limit(20))
+        for i in cache[::-1]:
+            await self.write_message({'user': i['fn'], 'msg': i['msg']})
 
     async def on_message(self, message):
+        db = self.application.db['chche']
         uid = self.get_secure_cookie('user-id')
-        await self.cm.broadcast(message, uid)
+        db.insert(
+            dict(time=time.time(), fn=cm[uid][0]['fn'], uid=uid, msg=message))
+        await cm.broadcast(message, uid)
 
     def on_close(self):
         uid = self.get_secure_cookie('user-id')
-        self.cm.pop(uid)
+        cm[uid].pop(-1)
