@@ -23,6 +23,8 @@
 
     function send() {
         ws.send(document.getElementById("input_msg").value);
+        add("我",document.getElementById("input_msg").value)
+        document.getElementById("input_msg").value=""
     }
     function mclose() {
         console.log('close chat room.');
