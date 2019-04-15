@@ -16,6 +16,8 @@ class ChatManage(dict):
     #     if 'uid' not in key:
     #         raise RuntimeError('User Not have uid.')
     #     return super().__setitem__(key, value)
+    # def add(self,id,*args):
+    #     if id in self:
     async def broadcast(self, message, user=None):
         if user:
             fn=self[user][0]['fn']
@@ -26,8 +28,8 @@ class ChatManage(dict):
                     wt = json.dumps(dict(user=fn, msg=message))
                     await v[1].write_message(wt)
         else:
+            wt = json.dumps(dict(user="Sys", msg=message))
             for i, v in self.items():
-                wt = json.dumps(dict(user="Sys", msg=message))
                 await v[1].write_message(wt)
 
 
@@ -64,8 +66,8 @@ class Login(Handler):
         udict = dict(id=uid, fn=fn, mail=mail, sub=sub, mes=Message)
         self.application.db['chat'].insert(udict)
         self.set_secure_cookie('user-id', uid)
-
-        cm[uid] = [udict, ]
+        udict.pop('_id')
+        cm[uid.encode('utf8')] = [udict, ]
         if __debug__:
             self.redirect('/chat/chatroom')
         else:
