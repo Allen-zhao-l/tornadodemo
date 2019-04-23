@@ -21,13 +21,13 @@ def init(app):
     add_routers(app, 'views.views')
     add_routers(app, 'views.blog.blog')
     add_routers(app, 'views.chat.chat')
+    add_routers(app, 'views.chat.api')
     return app
-
 
 class Applicationutils(Application):
     def __init__(self, handlers=None, default_host=None, transforms=None, **settings):
         super().__init__(handlers, default_host, transforms, **settings)
-        self.db = pymongo.MongoClient(port=27017)['tornado']
+        self.mdb = pymongo.MongoClient(port=27017)['tornado']
         self.redis=redis.Redis()
 if __name__ == '__main__':
     tornado.options.parse_command_line()

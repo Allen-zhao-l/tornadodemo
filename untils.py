@@ -1,7 +1,12 @@
-from abc import ABC
 import logging
+import os
+import time
 import types
-from typing import Optional, Awaitable
+from abc import ABC
+from threading import Lock, Thread, current_thread
+from typing import Awaitable, Optional
+
+import redis
 import tornado.web
 import tornado.websocket
 
@@ -19,6 +24,14 @@ class RouteMixIn:
     def route(self):
         return self.__route__
 
+    @property
+    def mondb(self):
+        return self.application.mdb
+
+    @property
+    def redb(self):
+        return self.application.redis
+
 
 class SocketHandler(RouteMixIn, tornado.websocket.WebSocketHandler):
     pass
@@ -26,6 +39,7 @@ class SocketHandler(RouteMixIn, tornado.websocket.WebSocketHandler):
 
 class Handler(RouteMixIn, tornado.web.RequestHandler):
     pass
+
 
 def escapdict(d, pri=1):
     assert isinstance(d, dict)
@@ -48,17 +62,16 @@ def add_routers(app, moudel_name=None):
         mod = getattr(__import__(
             moudel_name[:n], globals(), locals(), [name]), name)
 
-
-    defaultHost=getattr(mod,"__host__",r".*")
+    defaultHost = getattr(mod, "__host__", r".*")
     for attr in dir(mod):
         if attr.startswith('_'):
             continue
         attr = getattr(mod, attr)
-        if not isinstance(attr, type) or not issubclass(attr, (Handler,SocketHandler)):
+        if not isinstance(attr, type) or not issubclass(attr, (Handler, SocketHandler)):
             continue
         host = getattr(attr, '__host__')
-        if host==None:
-            host=defaultHost
+        if host == None:
+            host = defaultHost
         route = getattr(attr, '__route__')
         if host and route:
             app.add_handlers(host_pattern=host, host_handlers=[(route, attr)])
@@ -72,3 +85,74 @@ def setLogLevel(level: str) -> None:
     global logger
     level = getattr(logging, level, logging.INFO)
     logger.setLevel(level)
+
+
+""" def lock(from_url, name, ex=10, slower=False):
+    lock = Lock()
+    redisObj = redis.from_url(from_url)
+    assert redisObj.ping()
+    uuid = str(os.getpid())+str(current_thread().ident)
+    flag = True
+
+    def addtime():
+        while flag:
+            ttl = redisObj.ttl(name)
+            # print("续命", current_thread().name, ttl)
+            if ttl < ex:
+                redisObj.expire(name, ex)
+            # elif ttl < ex:
+            #     redisObj.expire(name, ex)
+
+            time.sleep(ex-0.5)
+
+    def deltx():
+        script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end"
+        redisObj.eval(script, 1, name, uuid)  # Lua脚本
+
+
+    def decorde(func):
+        def wrap(*args, **kwargs):
+            while True:
+                x=redisObj.eval("""if redis.call('ttl',KEYS[1]) >0 then 
+                                        return redis.call('ttl',KEYS[1])  
+                                    else 
+                                        return redis.call('set',KEYS[1],ARGV[1],'EX',ARGV[2],'NX') 
+                                    end""",1,name,uuid,ex)
+                if x==b'OK':
+                    break
+                else:
+                    time.sleep(int(x))
+            if slower:
+                t = Thread(None, addtime)
+                t.setDaemon(True)
+                t.start()
+            result = func(*args, **kwargs)
+            nonlocal flag
+            flag = False
+            deltx()
+            return result
+        return wrap
+    return decorde
+
+
+@lock("redis://127.0.0.1:32768/0", "local",1, slower=True)
+def func1():
+    print("fun1 runing...")
+    time.sleep(2)
+    print("func1 done.")
+
+
+@lock("redis://127.0.0.1:32768/0", "local")
+def func2():
+    print("fun2 runing...")
+    time.sleep(3)
+    print("func2 done.")
+
+if __name__ == "__main__":
+    import sys
+    if sys.argv[1]=="1":
+        func1()
+    else:
+        func2()
+
+     """

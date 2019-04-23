@@ -1,11 +1,13 @@
 from untils import Handler
+import markdown
 
 
 class Blog(Handler):
     __route__ = r'/blog'
 
     async def get(self, *args, **kwagrs):
-        self.render('blog.html')
+        content = markdown.markdown("a", output_format="html")
+        self.write(content)
 
 
 class BlogSingle(Handler):
