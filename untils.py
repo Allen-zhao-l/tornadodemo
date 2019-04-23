@@ -113,11 +113,11 @@ def setLogLevel(level: str) -> None:
     def decorde(func):
         def wrap(*args, **kwargs):
             while True:
-                x=redisObj.eval("""if redis.call('ttl',KEYS[1]) >0 then 
-                                        return redis.call('ttl',KEYS[1])  
-                                    else 
-                                        return redis.call('set',KEYS[1],ARGV[1],'EX',ARGV[2],'NX') 
-                                    end""",1,name,uuid,ex)
+                x=redisObj.eval("if redis.call('ttl',KEYS[1]) >0 then \
+                                        return redis.call('ttl',KEYS[1])  \
+                                    else \
+                                        return redis.call('set',KEYS[1],ARGV[1],'EX',ARGV[2],'NX') \
+                                    end",1,name,uuid,ex)
                 if x==b'OK':
                     break
                 else:
